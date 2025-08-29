@@ -1,0 +1,6 @@
+{
+  "venvPath": "/Users/morteza/Developer/flashcard_generator",
+  "venv": "venv",
+  "reportMissingImports": true,
+  "pythonVersion": "3.13"
+}

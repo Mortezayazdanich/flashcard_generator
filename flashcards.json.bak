@@ -1,0 +1,22 @@
+[
+  {
+    "Question": "questions: (venv) morteza@Mac flashcard_generator % python app app.py . (veneza: \"Morteza\" is a Mac user who uses the flashcard generator .",
+    "Answer": ""
+  },
+  {
+    "Question": "(veneza: \"Morteza\" is a Mac user who uses the flashcard generator .",
+    "Answer": ""
+  },
+  {
+    "Question": "questions: (venv) morteza@Mac flashcard_generator % python app app.py . [veneza: \"Morteza\" is a Mac user who uses the flashcard generator .",
+    "Answer": ""
+  },
+  {
+    "Question": "questions: (venv) morteza@Mac flashcard_generator % python app app.py . (veneza: \"Morteza\" is a mac user who uses the flashcard generator .",
+    "Answer": ""
+  },
+  {
+    "Question": "questions: (venv) morteza@Mac flashcard_generator % python app app.py . veneza: \"Morteza\" is a Mac user who uses the flashcard generator .",
+    "Answer": ""
+  }
+]
