@@ -1,7 +1,6 @@
-#Dependencies:
-	transformers
-	torch
-	tiktoken
-	protobuf
-	blobfile
-	Flask
+# Core dependencies for flashcard generation
+transformers
+torch
+spacy
+beautifulsoup4
+ftfy

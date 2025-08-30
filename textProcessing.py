@@ -28,41 +28,58 @@ def remove_headers_footers(text):
     return '\n'.join(cleaned_lines)
 
 
+# Global spaCy model to avoid repeated loading
+_nlp = None
+
+def get_nlp():
+    """Get spaCy model, loading it once if needed."""
+    global _nlp
+    if _nlp is None:
+        _nlp = spacy.load("en_core_web_sm")
+    return _nlp
+
 def segment_text(text, max_length=2000):
     """
     Segments the input text into chunks of approximately max_length characters,
     ensuring that segments end at sentence boundaries.
     """
-    # Load the pre-trained English model
-    nlp = spacy.load("en_core_web_sm")
-
-    paragraph = "Dr. Eva Smith works for the W.H.O. in Geneva. She is a leading expert. What is her specialty?"
-
-    # Process the text with spaCy   
+    nlp = get_nlp()
     doc = nlp(text)
+    
+    sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    
+    # Group sentences into chunks under max_length
+    chunks = []
+    current_chunk = ""
+    
+    for sentence in sentences:
+        if len(current_chunk) + len(sentence) + 1 <= max_length:
+            current_chunk += (" " if current_chunk else "") + sentence
+        else:
+            if current_chunk:
+                chunks.append(current_chunk)
+            current_chunk = sentence
+    
+    if current_chunk:
+        chunks.append(current_chunk)
+    
+    return chunks if chunks else [text]
 
-    # Iterate over sentences
-    sentences = [sent.text for sent in doc.sents]
-
-    return sentences
-
-def filter(text, min_length=50):
+def filter_segments(segments, min_length=50):
     """
-    Filters out segments that are shorter than min_length characters.
+    Filters out segments that are shorter than min_length characters
+    or contain procedural/boilerplate content.
     """
-
     # Rule for procedural content (starts with a common command verb)
     procedural_pattern = r'^\s*(First|Next|Then|Click|Select|Enter|Type)\s*,\s*.*'
     # Rule for common boilerplate
     boilerplate_pattern = r'Copyright|All rights reserved|Privacy Policy'
-
-    lines = text.split('\n')
-    filtered_lines = []
-    for line in lines:
-        # If the line doesn't match either pattern, keep it
-        if not re.search(procedural_pattern, line, re.IGNORECASE) and not re.search(boilerplate_pattern, line, re.IGNORECASE):
-            filtered_lines.append(line)
-
-    filtered_text = '\n'.join(filtered_lines).strip()
-    # Result: 'The main concept is photosynthesis, which is a critical process for plants.'
-    return [seg for seg in text if len(seg) >= min_length]
+    
+    filtered = []
+    for segment in segments:
+        if (len(segment) >= min_length and 
+            not re.search(procedural_pattern, segment, re.IGNORECASE) and 
+            not re.search(boilerplate_pattern, segment, re.IGNORECASE)):
+            filtered.append(segment)
+    
+    return filtered
