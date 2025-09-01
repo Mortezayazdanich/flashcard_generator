@@ -6,3 +6,9 @@ beautifulsoup4
 ftfy
 pandas
 sentencepiece
+
+# PDF and OCR processing
+pymupdf          # Fast PDF text extraction
+easyocr          # OCR text extraction
+Pillow           # Image processing and enhancement
+opencv-python    # Image preprocessing (optional, for advanced features)
