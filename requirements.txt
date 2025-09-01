@@ -5,3 +5,8 @@
 	protobuf
 	blobfile
 	Flask
+	pandas
+	beautifulsoup4
+	ftfy
+	spacy
+	sentencepiece

@@ -15,16 +15,15 @@ def main():
     for absorbing the light energy that drives photosynthesis.
     """
 
-    
-    # text_normalization(text)
-    # remove_headers_footers(text)
+    # Normalize and segment into semantic chunks (per Pipeline Phase 1 & 2)
+    normalized = text_normalization(text)
+    cleaned = filter(normalized)
+    chunks = segment_into_chunks(cleaned, target_words=220, overlap_ratio=0.2)
+    segments = filter_segments(chunks, min_length=50)
 
-    generate_summary(text)
+    generate_summary(cleaned)
 
-    sentences = segment_text(text)
-    # filter(text)
-
-    for seg in sentences:
+    for seg in segments:
         flashcards = generate_flashcards(seg)
         save_flashcards(flashcards)
 

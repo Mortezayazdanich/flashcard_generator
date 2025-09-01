@@ -1,14 +1,20 @@
 from transformers import pipeline
 import json
 
-# Load the Flan-T5 pipeline. We can use this for all our tasks.
-# Using a larger model like 'base' or 'large' will yield better results.
-generator = pipeline("text2text-generation", model="google/flan-t5-base")
+# Lazy-load the Flan-T5 pipeline to avoid heavy downloads at import time
+_generator = None
+
+def _get_generator():
+    global _generator
+    if _generator is None:
+        _generator = pipeline("text2text-generation", model="google/flan-t5-base")
+    return _generator
 
 def generate_summary(text, max_tokens=200):
     # --- Step 1: Summarize the text using Flan-T5 ---
     # Flan-T5 is great at following instructions, so we just tell it what to do.
     summary_prompt = f"Summarize the following text: {text}"
+    generator = _get_generator()
     summary_result = generator(summary_prompt, max_new_tokens=max_tokens, truncation=True)
     summary = summary_result[0]['generated_text']
     
@@ -30,28 +36,68 @@ def generate_flashcards(text, num_questions=2):
 
     questions_prompt = (
     f"Generate a JSON array of exactly {num_questions} distinct question strings based on the text. "
-    "Do not include anything else in your response besides the JSON array.\n"
+    "Output only the JSON array with no extra text before or after.\n"
     'Example format: ["Question 1?", "Question 2?"]\n\n'
     f"Text:\n{text}"
     )    
     
+    generator = _get_generator()
     questions_result = generator(
-        questions_prompt, 
-        max_new_tokens=256,
-        num_beams=num_questions,  # Beam width, not number of outputs
-        num_return_sequences=1,   # One sequence containing a list
+        questions_prompt,
+        max_new_tokens=128,
+        num_beams=4,
+        num_return_sequences=1,
         truncation=True,
-        do_sample=True,
-        temperature=0.7
+        do_sample=False
     )
 
-    # The output is a single string containing a numbered list, so we split it into individual questions.
-    generated_questions_text = questions_result[0]['generated_text']
-    questions = [q.strip() for q in generated_questions_text.split('\n') if q.strip() and len(q.strip()) > 5]
-    # Clean numbering like "1. What is..."
-    questions = [q.split('.', 1)[-1].strip() for q in questions]
-    # Keep only non-empty lines, prefer ones that look like questions
-    questions = [q for q in questions if q]
+    # Parse JSON array reliably, with a fallback that extracts the first JSON list found
+    generated_questions_text = questions_result[0]['generated_text'].strip()
+
+    def _extract_json_array(text_str):
+        try:
+            data = json.loads(text_str)
+            if isinstance(data, list):
+                return data
+        except json.JSONDecodeError:
+            pass
+        import re
+        match = re.search(r"\[.*?\]", text_str, flags=re.S)
+        if match:
+            try:
+                data = json.loads(match.group(0))
+                if isinstance(data, list):
+                    return data
+            except json.JSONDecodeError:
+                pass
+        return []
+
+    raw_questions = _extract_json_array(generated_questions_text)
+
+    # Normalize, deduplicate, and enforce constraints
+    def _normalize_question(q):
+        return str(q).strip().strip('"').strip("'")
+
+    normalized_questions = []
+    seen = set()
+    import re as _re
+    generic_q_pattern = _re.compile(r"^question\s*\d+\?$", flags=_re.I)
+
+    for q in raw_questions:
+        if not isinstance(q, str):
+            continue
+        qn = _normalize_question(q)
+        if len(qn) < 5 or '?' not in qn:
+            continue
+        if generic_q_pattern.match(qn):
+            continue
+        key = qn.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        normalized_questions.append(qn)
+
+    questions = normalized_questions[:num_questions]
     
     # Fallback: if fewer than requested, generate additional questions one-by-one
     if len(questions) < num_questions:
@@ -63,16 +109,17 @@ def generate_flashcards(text, num_questions=2):
                 "Output only the question.\n\n"
                 f"Text:\n{text}"
             )
+            generator = _get_generator()
             single_result = generator(
                 single_prompt,
                 max_new_tokens=64,
                 truncation=True,
-                do_sample=True,
-                temperature=0.8
+                do_sample=False,
+                num_beams=4
             )
             candidate = single_result[0]['generated_text'].strip()
             normalized = candidate.lower()
-            if candidate and normalized not in existing_lower:
+            if candidate and normalized not in existing_lower and not generic_q_pattern.match(candidate):
                 questions.append(candidate)
                 existing_lower.add(normalized)
             else:
@@ -83,11 +130,27 @@ def generate_flashcards(text, num_questions=2):
     # --- Step 3: Generate an answer for each question ---
     cards = []
     for question in questions:
-        # For each question, we create a new prompt asking for the answer based on the summary.
-        answer_prompt = f"Based on the text below, answer the following question with a short explanation.\n\nText: {text}\n\nQuestion: {question}\n\nAnswer:"
-        
-        answer_result = generator(answer_prompt, max_new_tokens=64, truncation=True)
-        answer = answer_result[0]['generated_text']
-        cards.append({"Question": question, "Answer": answer.strip()})
+        # For each question, we create a constrained prompt asking for only the answer.
+        answer_prompt = (
+            "Based on the text below, answer the question in one concise sentence. "
+            "Output only the answer. Do not repeat the question.\n\n"
+            f"Text: {text}\n\nQuestion: {question}\n\nAnswer:"
+        )
+
+        generator = _get_generator()
+        answer_result = generator(
+            answer_prompt,
+            max_new_tokens=48,
+            truncation=True,
+            do_sample=False,
+            num_beams=4
+        )
+        answer = answer_result[0]['generated_text'].strip().strip('"').strip("'")
+
+        # Simple quality filters
+        if not answer or answer.lower() == question.lower() or len(answer.split()) < 2:
+            continue
+
+        cards.append({"Question": question.strip(), "Answer": answer.strip()})
 
     return cards 
