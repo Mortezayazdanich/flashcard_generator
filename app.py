@@ -5,15 +5,15 @@ from textProcessing import text_normalization, segment_into_chunks, filter_segme
 
 def main():
     # Get input text
-    # text = input("Enter text to generate flashcards: ")
-    text = """
-    Photosynthesis is a process used by plants, algae, and certain bacteria to convert light energy into 
-    chemical energy, through a process that converts carbon dioxide and water into sugars (glucose) and oxygen. 
-    This process is crucial for life on Earth as it produces most of the oxygen in the atmosphere and supplies 
-    the chemical energy necessary for most living organisms. The process occurs in chloroplasts, which are 
-    small organelles found in the cells of plants. Chlorophyll, the green pigment in chloroplasts, is responsible 
-    for absorbing the light energy that drives photosynthesis.
-    """
+    text = input("Enter text to generate flashcards: ")
+    # text = """
+    # Photosynthesis is a process used by plants, algae, and certain bacteria to convert light energy into 
+    # chemical energy, through a process that converts carbon dioxide and water into sugars (glucose) and oxygen. 
+    # This process is crucial for life on Earth as it produces most of the oxygen in the atmosphere and supplies 
+    # the chemical energy necessary for most living organisms. The process occurs in chloroplasts, which are 
+    # small organelles found in the cells of plants. Chlorophyll, the green pigment in chloroplasts, is responsible 
+    # for absorbing the light energy that drives photosynthesis.
+    # """
 
     # Process text efficiently using pipeline-aligned approach
     normalized_text = text_normalization(text)

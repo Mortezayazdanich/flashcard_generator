@@ -1,13 +1,22 @@
 [
-<<<<<<< HEAD
-    {
-        "Question":"What is the role of chlorophyll in photosynthesis?",
-        "Answer":"absorbing the light energy that drives photosynthesis"
-    }
-=======
   {
-    "Question": "What do chloroplasts do?",
-    "Answer": "absorb light"
+    "Question": "What is the role of chlorophyll in photosynthesis?",
+    "Answer": "absorbing the light energy that drives photosynthesis"
+  },
+  {
+    "Question": "What is the best title of the passage?",
+    "Answer": "Walking in a Cathedral Built by Time"
+  },
+  {
+    "Question": "What did the forest have to do with itself?",
+    "Answer": "it was a place where one could feel infinitesimally small yet profoundly connected to the immense, sprawling web of life thriving in the gloom"
+  },
+  {
+    "Question": "How did the ground feel?",
+    "Answer": "a slow, patient respiration that matched the pulse of the cosmos above, hidden by the thick leaves but felt in the soul"
+  },
+  {
+    "Question": "What is the main idea of this passage?",
+    "Answer": "this was not an escape, but a discovery of a deeper reality."
   }
->>>>>>> main
 ]

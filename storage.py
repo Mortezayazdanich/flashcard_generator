@@ -44,4 +44,4 @@ def clean_dataset():
     with STORAGE_PATH.open("w", encoding="utf-8") as f:
         json.dump(unique_cards, f, ensure_ascii=False, indent=2)
     
-    print(f"✅ Cleaned dataset: {len(cards)} → {len(unique_cards)} unique flashcards")
+    print(f"\n✅ Cleaned dataset: {len(cards)} → {len(unique_cards)} unique flashcards")
