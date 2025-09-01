@@ -150,23 +150,3 @@ def generate_flashcards(text, num_questions=2):
     return cards 
 
 
-def extract_json_array(text: str):
-    try:
-        data = json.loads(text)
-        if isinstance(data, list):
-            return data
-    except json.JSONDecodeError:
-        pass
-    match = re.search(r'\[.*?\]', text, flags=re.S)
-    if match:
-        try:
-            data = json.loads(match.group(0))
-            if isinstance(data, list):
-                return data
-        except json.JSONDecodeError:
-            pass
-    return None
-
-
-def normalize_q(q: str) -> str:
-    return q.strip().strip('"').strip()

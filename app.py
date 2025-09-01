@@ -1,21 +1,11 @@
 from ai import generate_flashcards, generate_summary
 from storage import clean_dataset, save_flashcards, load_flashcards
-from textProcessing import text_normalization, segment_text, filter_segments
+from textProcessing import text_normalization, segment_into_chunks, filter_segments, filter
 
 
 def main():
     # Get input text
-    text = input("Enter text to generate flashcards: ")
-    # text = """
-    # Photosynthesis is a process used by plants, algae, and certain bacteria to convert light energy into 
-    # chemical energy, through a process that converts carbon dioxide and water into sugars (glucose) and oxygen. 
-    # This process is crucial for life on Earth as it produces most of the oxygen in the atmosphere and supplies 
-    # the chemical energy necessary for most living organisms. The process occurs in chloroplasts, which are 
-    # small organelles found in the cells of plants. Chlorophyll, the green pigment in chloroplasts, is responsible 
-    # for absorbing the light energy that drives photosynthesis.
-    # """
-
-<<<<<<< HEAD
+    # text = input("Enter text to generate flashcards: ")
     text = """
     Photosynthesis is a process used by plants, algae, and certain bacteria to convert light energy into 
     chemical energy, through a process that converts carbon dioxide and water into sugars (glucose) and oxygen. 
@@ -25,30 +15,16 @@ def main():
     for absorbing the light energy that drives photosynthesis.
     """
 
-    # Normalize and segment into semantic chunks (per Pipeline Phase 1 & 2)
-    normalized = text_normalization(text)
-    cleaned = filter(normalized)
-    chunks = segment_into_chunks(cleaned, target_words=220, overlap_ratio=0.2)
-    segments = filter_segments(chunks, min_length=50)
-
-    generate_summary(cleaned)
-
-    for seg in segments:
-        flashcards = generate_flashcards(seg)
-        save_flashcards(flashcards)
-
-    clean_dataset()
-    cards = load_flashcards()
-    for card in cards:
-        print(f"Q: {card['Question']}\nA: {card['Answer']}\n")
-=======
-    # Process text efficiently
+    # Process text efficiently using pipeline-aligned approach
     normalized_text = text_normalization(text)
-    segments = segment_text(normalized_text, max_length=1500)
-    filtered_segments = filter_segments(segments, min_length=100)
+    cleaned_text = filter(normalized_text)
+    chunks = segment_into_chunks(cleaned_text, target_words=220, overlap_ratio=0.2)
+    filtered_segments = filter_segments(chunks, min_length=50)
     
     print(f"Processing {len(filtered_segments)} text segments...")
->>>>>>> main
+    
+    # Generate summary from cleaned text
+    generate_summary(cleaned_text)
     
     # Generate flashcards for each segment
     all_flashcards = []

@@ -1,21 +1,13 @@
-<<<<<<< HEAD
-#Dependencies:
-	transformers
-	torch
-	tiktoken
-	protobuf
-	blobfile
-	Flask
-	pandas
-	beautifulsoup4
-	ftfy
-	spacy
-	sentencepiece
-=======
-# Core dependencies for flashcard generation
+# Dependencies:
+
 transformers
 torch
-spacy
+tiktoken
+protobuf
+blobfile
+Flask
+pandas
 beautifulsoup4
 ftfy
->>>>>>> main
+spacy
+sentencepiece

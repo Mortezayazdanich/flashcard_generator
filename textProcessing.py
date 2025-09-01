@@ -67,34 +67,22 @@ def segment_text(text, max_length=2000):
 
 def filter_segments(segments, min_length=50):
     """
-<<<<<<< HEAD
-    Backward-compatible filter that accepts a string, removes boilerplate/procedural lines,
-    and returns the cleaned string. Prefer using filter_segments for lists of segments.
-=======
     Filters out segments that are shorter than min_length characters
     or contain procedural/boilerplate content.
->>>>>>> main
     """
     # Rule for procedural content (starts with a common command verb)
     procedural_pattern = r'^\s*(First|Next|Then|Click|Select|Enter|Type)\s*,\s*.*'
     # Rule for common boilerplate
     boilerplate_pattern = r'Copyright|All rights reserved|Privacy Policy'
-<<<<<<< HEAD
-
-    lines = text.split('\n')
-    filtered_lines = []
-    for line in lines:
-        if not re.search(procedural_pattern, line, re.IGNORECASE) and not re.search(boilerplate_pattern, line, re.IGNORECASE):
-            filtered_lines.append(line)
-
-    return '\n'.join(filtered_lines).strip()
-
-
-def filter_segments(segments, min_length=50):
-    """
-    Filters out text segments shorter than min_length characters.
-    """
-    return [seg for seg in segments if isinstance(seg, str) and len(seg.strip()) >= min_length]
+    
+    filtered = []
+    for segment in segments:
+        if (isinstance(segment, str) and len(segment.strip()) >= min_length and 
+            not re.search(procedural_pattern, segment, re.IGNORECASE) and 
+            not re.search(boilerplate_pattern, segment, re.IGNORECASE)):
+            filtered.append(segment)
+    
+    return filtered
 
 
 def segment_into_chunks(text, target_words=220, overlap_ratio=0.2):
@@ -141,14 +129,23 @@ def segment_into_chunks(text, target_words=220, overlap_ratio=0.2):
             idx += 1
 
     return chunks
-=======
-    
-    filtered = []
-    for segment in segments:
-        if (len(segment) >= min_length and 
-            not re.search(procedural_pattern, segment, re.IGNORECASE) and 
-            not re.search(boilerplate_pattern, segment, re.IGNORECASE)):
-            filtered.append(segment)
-    
-    return filtered
->>>>>>> main
+
+
+def filter(text, min_length=50):
+    """
+    Backward-compatible filter that accepts a string, removes boilerplate/procedural lines,
+    and returns the cleaned string. Prefer using filter_segments for lists of segments.
+    """
+
+    # Rule for procedural content (starts with a common command verb)
+    procedural_pattern = r'^\s*(First|Next|Then|Click|Select|Enter|Type)\s*,\s*.*'
+    # Rule for common boilerplate
+    boilerplate_pattern = r'Copyright|All rights reserved|Privacy Policy'
+
+    lines = text.split('\n')
+    filtered_lines = []
+    for line in lines:
+        if not re.search(procedural_pattern, line, re.IGNORECASE) and not re.search(boilerplate_pattern, line, re.IGNORECASE):
+            filtered_lines.append(line)
+
+    return '\n'.join(filtered_lines).strip()
