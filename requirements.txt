@@ -4,3 +4,5 @@ torch
 spacy
 beautifulsoup4
 ftfy
+pandas
+sentencepiece
