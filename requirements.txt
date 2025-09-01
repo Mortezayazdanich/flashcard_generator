@@ -11,3 +11,6 @@ beautifulsoup4
 ftfy
 spacy
 sentencepiece
+PyMuPDF
+easyocr
+Pillow

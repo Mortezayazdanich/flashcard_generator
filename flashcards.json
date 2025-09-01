@@ -1,22 +1,66 @@
 [
   {
-    "Question": "What is the role of chlorophyll in photosynthesis?",
-    "Answer": "absorbing the light energy that drives photosynthesis"
+    "Question": "what are some examples of reinforcement learning?",
+    "Answer": "image recognition, natural language processing, recommendation systems"
   },
   {
-    "Question": "What is the best title of the passage?",
-    "Answer": "Walking in a Cathedral Built by Time"
+    "Question": "What is the life cycle of an information system database design?",
+    "Answer": "design methodology consists of decomposition of the project activity into successive and independent phases strategies to be followed in the various phases and criteria for choosing the best strategy reference models to describe the input and output data of the various phases"
   },
   {
-    "Question": "What did the forest have to do with itself?",
-    "Answer": "it was a place where one could feel infinitesimally small yet profoundly connected to the immense, sprawling web of life thriving in the gloom"
+    "Question": "Is it possible for a student to take the same exam more than once s2 s3 s1 student s4 c1 c2 c3 c4 course c5 t1 t2 t3 time e1 38 occurrences of",
+    "Answer": "ternary relationship s2 s3 s1 s4 c1 c2 c3 c4 c5 t1 t2 t3 time e1 e2"
   },
   {
-    "Question": "How did the ground feel?",
-    "Answer": "a slow, patient respiration that matched the pulse of the cosmos above, hidden by the thick leaves but felt in the soul"
+    "Question": "Is it possible for a student to take the same exam more than once s1 s3 s1 student s4 c1 c2 c3 c4 course c5 t1 t2 t3 time e1 38 occurrences of",
+    "Answer": "ternary relationship s2 s3 s1 s4 c1 c2 c3 c4 c5 t1 t2 t3 time e1 e2"
   },
   {
-    "Question": "What is the main idea of this passage?",
-    "Answer": "this was not an escape, but a discovery of a deeper reality."
+    "Question": "Is it possible for a student to take the same exam more than once s1 s3 s1 student s4 c1 c2 c3 c4 course c5 t1 t2 t3 time e1 e2 e3",
+    "Answer": "ternary relationship s2 s3 s1 s4 c1 c2 c3 c4 c5 t1 t2 t3 time e1 e2"
+  },
+  {
+    "Question": "What is the minimum cardinality of a ternary relationship?",
+    "Answer": "recursive relationship"
+  },
+  {
+    "Question": "What is the minimum and maximum number of attribute values associated with an occurrence of an entity or relationship if it is omitted it corresponds to 1,1 minimum 0 corresponds to an attribute that admits a null value maximum n corresponds to an attribute that can have more than one value",
+    "Answer": "multivalued attribute 48 educational qualification 0,n profession 0,1 person name fiscal code surname identifier it is specified for each entity describes the concepts attributes andor entities of the schema that allow you to uniquely identify the occurrences of"
+  },
+  {
+    "Question": "What are the generalization properties of a parent entity?",
+    "Answer": "attributes, identifiers, relationships, other generalizations is also a property of each child entity"
+  },
+  {
+    "Question": "What are the generalization properties of a skier and a soccer player?",
+    "Answer": "each occurrence of a child entity is also an occurrence of the parent entity each property of the parent entity attributes, identifiers, relationships, other generalizations is also a property of each child entity property known as"
+  },
+  {
+    "Question": "What is the difference between generalization and e-r models?",
+    "Answer": "er model documentation database design 69 documenting e-r models 70 documenting e-r models data dictionary enrich the e-r schema with natural language descriptions of entities, relationships, and attributes"
+  },
+  {
+    "Question": "What are some examples of generalization with only one child?",
+    "Answer": "68 er model documentation database design 69 documenting e-r models 70 documenting e-r models data dictionary enrich the e-r schema with natural language descriptions of entities, relationships, and attributes 71 data"
+  },
+  {
+    "Question": "What are the data integrity constraints?",
+    "Answer": "the grade of an exam can only take values between 0 and 30 rv1 each student cannot pass the same exam twice rv3 a student may not take more than three exams for the same course during the same academic"
+  },
+  {
+    "Question": "What are the derivation rules for documenting e-r models?",
+    "Answer": "the number of credits acquired by a student is obtained by adding the number of credits of the courses for which the student has passed the exam rd2 the average mark is obtained by calculating the average of the marks of the exams"
+  },
+  {
+    "Question": "what is scoliosis?",
+    "Answer": "symptomatic scoliosis"
+  },
+  {
+    "Question": "What is scoliosis symptomatic or syndromic scoliosis symptomatic or syndromic scoliosis symptomatic or syndromic scoliosis symptomatic or syndromic s",
+    "Answer": "scoliosis is three-dimensional deformity ofthe spine untreated symptomatic or syndromic scoliosis, well and trunk which includes lateral deviation, rotation as eo"
+  },
+  {
+    "Question": "What is the best way to test scolio- eg back 508?",
+    "Answer": "cochrane reviews"
   }
 ]
