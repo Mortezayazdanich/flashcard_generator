@@ -1,5 +1,5 @@
 from transformers import pipeline
-import json
+import json, re
 
 # Lazy-load the Flan-T5 pipeline to avoid heavy downloads at import time
 _generator = None
@@ -11,8 +11,7 @@ def _get_generator():
     return _generator
 
 def generate_summary(text, max_tokens=200):
-    # --- Step 1: Summarize the text using Flan-T5 ---
-    # Flan-T5 is great at following instructions, so we just tell it what to do.
+    """Generate and return a summary of the given text."""
     summary_prompt = f"Summarize the following text: {text}"
     generator = _get_generator()
     summary_result = generator(summary_prompt, max_new_tokens=max_tokens, truncation=True)
@@ -21,19 +20,15 @@ def generate_summary(text, max_tokens=200):
     print("--- Generated Summary ---")
     print(summary)
     print("-" * 25)
+    
+    return summary
 
 def generate_flashcards(text, num_questions=2):
     """
     Generates flashcards (question-answer pairs) from a given text using Flan-T5.
     """
-
-    # --- Step 2: Generate questions from the summary ---
-    # Ask for an explicit, numbered list with exactly N items.
-    # questions_prompt = (
-    #     f"Generate exactly {num_questions} distinct, insightful questions based on the text below.\n"
-    #     f"Output only the questions, one per line, numbered 1 to {num_questions}.\n\n{text}"
-    # )
-
+    
+    # --- Step 2: Generate questions from the text ---
     questions_prompt = (
     f"Generate a JSON array of exactly {num_questions} distinct question strings based on the text. "
     "Output only the JSON array with no extra text before or after.\n"
@@ -150,7 +145,8 @@ def generate_flashcards(text, num_questions=2):
         # Simple quality filters
         if not answer or answer.lower() == question.lower() or len(answer.split()) < 2:
             continue
-
         cards.append({"Question": question.strip(), "Answer": answer.strip()})
 
     return cards 
+
+
