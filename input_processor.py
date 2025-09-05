@@ -1,111 +1,120 @@
 import fitz  # PyMuPDF
-import easyocr
-import io, os, logging
-from logging import getLogger
-from PIL import Image
+import os
+import logging
 import mimetypes
 from pathlib import Path
+from typing import List, Union, Optional
+from logging import getLogger
+from model_manager import get_ocr_reader
+from patterns import FilePatterns
+from config import get_config
+from exceptions import InputProcessingError, FileTypeError, OCRError
 
 
-def detect_file_type(file_path):
+def detect_file_type(file_path: Union[str, Path]) -> str:
     """Auto-detect file type based on extension and MIME type."""
-    if not os.path.exists(file_path):
+    file_path_str = str(file_path)
+    if not os.path.exists(file_path_str):
         raise FileNotFoundError(f"File not found: {file_path}")
     
-    # Get file extension
-    file_ext = Path(file_path).suffix.lower()
-    
-    # Get MIME type
-    mime_type, _ = mimetypes.guess_type(file_path)
-    
-    # Determine file type
-    if file_ext == '.pdf' or (mime_type and 'pdf' in mime_type):
+    # Use optimized patterns for file type detection
+    if FilePatterns.is_pdf_file(file_path_str):
         return 'pdf'
-    elif file_ext in ['.jpg', '.jpeg', '.png', '.bmp', '.tiff', '.webp'] or (mime_type and mime_type.startswith('image/')):
+    elif FilePatterns.is_image_file(file_path_str):
         return 'image'
-    elif file_ext in ['.txt', '.md'] or (mime_type and mime_type.startswith('text/')):
+    elif FilePatterns.is_text_file(file_path_str):
         return 'text'
-    else:
-        return 'unknown'
+    
+    # Fallback to MIME type detection
+    mime_type, _ = mimetypes.guess_type(file_path_str)
+    if mime_type:
+        if 'pdf' in mime_type:
+            return 'pdf'
+        elif mime_type.startswith('image/'):
+            return 'image'
+        elif mime_type.startswith('text/'):
+            return 'text'
+    
+    return 'unknown'
 
 
-def extract_text_from_pdf(pdf_path):
-    """Extracts selectable text from a PDF."""
-    if not os.path.exists(pdf_path):
-        raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+def extract_text_from_pdf(pdf_path: Union[str, Path]) -> str:
+    """Extract selectable text from a PDF efficiently."""
+    pdf_path_str = str(pdf_path)
+    if not os.path.exists(pdf_path_str):
+        raise InputProcessingError(pdf_path_str, "PDF file not found")
+    
     try:
-        with fitz.open(pdf_path) as doc:
-            text_parts = [page.get_text("text") for page in doc]  # type: ignore
+        with fitz.open(pdf_path_str) as doc:
+            text_parts = [page.get_text() for page in doc] # type: ignore
             return "".join(text_parts)
     except Exception as e:
-        logger = getLogger(__name__)
-        logger.error(f"Failed to process PDF: {e}")
-        raise
+        raise InputProcessingError(pdf_path_str, "Failed to extract PDF text", e)
 
 
-def extract_text_from_image(image_path, languages=['en']):
-    """Extract text from image using OCR."""
-    if not os.path.exists(image_path):
-        raise FileNotFoundError(f"Image file not found: {image_path}")
+def extract_text_from_image(image_path: Union[str, Path], languages: Optional[List[str]] = None) -> str:
+    """Extract text from image using optimized OCR."""
+    config = get_config()
+    if languages is None:
+        languages = config.OCR_DEFAULT_LANGUAGES
+        
+    image_path_str = str(image_path)
+    if not os.path.exists(image_path_str):
+        raise InputProcessingError(image_path_str, "Image file not found")
     
     try:
-        reader = easyocr.Reader(languages)
-        results = reader.readtext(image_path)
+        # Use ModelManager for OCR reader
+        reader = get_ocr_reader(languages)
+        results = reader.readtext(image_path_str)
         
-        # Extract text from OCR results
+        # Extract text using config threshold
         text_parts = []
         for (bbox, text, confidence) in results:
-            if float(confidence) > 0.5:  # Filter low-confidence results
+            if float(confidence) > config.OCR_CONFIDENCE_THRESHOLD:
                 text_parts.append(text)
         
         return " ".join(text_parts)
     except Exception as e:
-        logger = getLogger(__name__)
-        logger.error(f"Failed to process image with OCR: {e}")
-        raise
+        raise OCRError(image_path_str, languages, e)
 
 
-def read_text_file(file_path):
-    """Read content from a text file."""
-    if not os.path.exists(file_path):
-        raise FileNotFoundError(f"Text file not found: {file_path}")
+def read_text_file(file_path: Union[str, Path]) -> str:
+    """Read content from a text file with encoding fallback."""
+    file_path_str = str(file_path)
+    if not os.path.exists(file_path_str):
+        raise InputProcessingError(file_path_str, "Text file not found")
     
-    try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            return file.read()
-    except UnicodeDecodeError:
-        # Try with different encoding if UTF-8 fails
-        with open(file_path, 'r', encoding='latin-1') as file:
-            return file.read()
-    except Exception as e:
-        logger = getLogger(__name__)
-        logger.error(f"Failed to read text file: {e}")
-        raise
+    encodings = ['utf-8', 'latin-1', 'cp1252', 'utf-16']
+    for encoding in encodings:
+        try:
+            with open(file_path_str, 'r', encoding=encoding) as file:
+                return file.read()
+        except UnicodeDecodeError:
+            continue
+        except Exception as e:
+            raise InputProcessingError(file_path_str, f"Failed to read with encoding {encoding}", e)
+    
+    raise InputProcessingError(file_path_str, "Unable to read file with any supported encoding")
 
 
 class PDFTextExtractor:
-    """Advanced PDF text extractor with OCR fallback capabilities."""
+    """Advanced PDF text extractor with OCR fallback using optimized ModelManager."""
     
-    def __init__(self, languages=['en']):
-        self.languages = languages
-        self._ocr_reader = None
+    def __init__(self, languages: Optional[List[str]] = None):
+        config = get_config()
+        self.languages = languages or config.OCR_DEFAULT_LANGUAGES
         self.logger = getLogger(__name__)
+        self.config = config
     
-    @property
-    def ocr_reader(self):
-        """Lazy loading of OCR reader to avoid unnecessary initialization."""
-        if self._ocr_reader is None:
-            self._ocr_reader = easyocr.Reader(self.languages)
-        return self._ocr_reader
-    
-    def extract_text(self, pdf_path, use_ocr_fallback=True):
+    def extract_text(self, pdf_path: Union[str, Path], use_ocr_fallback: bool = True) -> str:
         """Extract text from PDF with OCR fallback for scanned documents."""
-        if not os.path.exists(pdf_path):
-            raise FileNotFoundError(f"PDF file not found: {pdf_path}")
+        pdf_path_str = str(pdf_path)
+        if not os.path.exists(pdf_path_str):
+            raise InputProcessingError(pdf_path_str, "PDF file not found")
         
         try:
             # First, try extracting selectable text
-            text = extract_text_from_pdf(pdf_path)
+            text = extract_text_from_pdf(pdf_path_str)
             
             # Check if text extraction was successful
             if text.strip() and len(text.strip()) > 50:
@@ -115,37 +124,43 @@ class PDFTextExtractor:
             # If text is minimal or empty, use OCR fallback
             if use_ocr_fallback:
                 self.logger.info("Minimal text found, using OCR fallback")
-                return self._extract_with_ocr(pdf_path)
+                return self._extract_with_ocr(pdf_path_str)
             else:
                 return text
                 
         except Exception as e:
             if use_ocr_fallback:
                 self.logger.warning(f"Text extraction failed, trying OCR: {e}")
-                return self._extract_with_ocr(pdf_path)
+                try:
+                    return self._extract_with_ocr(pdf_path_str)
+                except Exception as ocr_e:
+                    raise InputProcessingError(pdf_path_str, "Both text and OCR extraction failed", ocr_e)
             else:
                 raise
     
-    def _extract_with_ocr(self, pdf_path):
+    def _extract_with_ocr(self, pdf_path: str) -> str:
         """Extract text using OCR by converting PDF pages to images."""
         try:
-            text_parts = []
+            text_parts: List[str] = []
+            
+            # Use ModelManager for OCR reader
+            ocr_reader = get_ocr_reader(self.languages)
             
             with fitz.open(pdf_path) as doc:
                 for page_num in range(len(doc)):
                     page = doc[page_num]
                     
                     # Convert page to image
-                    pix = page.get_pixmap()  # type: ignore
+                    pix = page.get_pixmap() # type: ignore
                     img_data = pix.tobytes("png")
                     
                     # Use OCR on the image
-                    results = self.ocr_reader.readtext(img_data)
+                    results = ocr_reader.readtext(img_data)
                     
-                    # Extract text from OCR results
-                    page_text = []
+                    # Extract text using config threshold
+                    page_text: List[str] = []
                     for (bbox, text, confidence) in results:
-                        if float(confidence) > 0.5:  # Filter low-confidence results 
+                        if float(confidence) > self.config.OCR_CONFIDENCE_THRESHOLD:
                             page_text.append(text)
                     
                     if page_text:
@@ -155,19 +170,23 @@ class PDFTextExtractor:
             
         except Exception as e:
             self.logger.error(f"OCR extraction failed: {e}")
-            raise
+            raise OCRError(pdf_path, self.languages, e)
 
 
-def process_input(input_source, languages=['en']):
+def process_input(input_source: str, languages: Optional[List[str]] = None) -> str:
     """Unified interface for processing different input types.
     
     Args:
-        input_source (str): Can be a file path or raw text
-        languages (list): Languages for OCR (default: ['en'])
+        input_source: Can be a file path or raw text
+        languages: Languages for OCR (uses config default if None)
     
     Returns:
-        str: Extracted text ready for the flashcard generation pipeline
+        Extracted text ready for the flashcard generation pipeline
     """
+    config = get_config()
+    if languages is None:
+        languages = config.OCR_DEFAULT_LANGUAGES
+        
     logger = getLogger(__name__)
     
     # Check if input_source is a file path
@@ -190,7 +209,7 @@ def process_input(input_source, languages=['en']):
             return read_text_file(input_source)
         
         else:
-            raise ValueError(f"Unsupported file type: {file_type}")
+            raise FileTypeError(input_source, file_type)
     
     else:
         # Treat as raw text input

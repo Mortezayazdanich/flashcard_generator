@@ -1,113 +1,118 @@
 from bs4 import BeautifulSoup
-import re
-import ftfy 
-import spacy
+import ftfy
+from typing import List, Optional
+import logging
+from model_manager import get_nlp_model
+from patterns import TextCleaner, TextPatterns
+from config import get_config
+from exceptions import TextProcessingError
+
+logger = logging.getLogger(__name__)
 
 
-def text_normalization(text):
-    """
-    Normalize the input text by converting it to lowercase and stripping leading/trailing whitespace.
-    """
-    html_text = re.sub(r'<.*?>', '', text)
-    soup = BeautifulSoup(html_text, "html.parser")
-    text = soup.get_text()    
-    text = re.sub(r'[^\w\s.,!?-]', '', text)
-    text = re.sub(r'\s+', ' ', text).strip()
-    text = text.replace("“", '"').replace("”", '"')
-    text = text.replace("‘", "'").replace("’", "'")
-    text = ftfy.fix_text(text)
-    text = remove_headers_footers(text)
-    return text.lower().strip()
+def text_normalization(text: str) -> str:
+    """Normalize and clean input text efficiently."""
+    try:
+        # Remove HTML, non-word chars, normalize whitespace
+        text = TextCleaner.remove_html_tags(text)
+        soup = BeautifulSoup(text, "html.parser")
+        text = soup.get_text()
+        text = TextCleaner.remove_non_word_chars(text)
+        text = TextCleaner.normalize_whitespace(text)
 
-def remove_headers_footers(text):
+        # Normalize quotes and fix encoding
+        text = text.replace("“", '"').replace("”", '"')
+        text = text.replace("‘", "'").replace("’", "'")
+        text = ftfy.fix_text(text)
+
+        # Remove headers/footers
+        text = remove_headers_footers(text)
+        return text.lower().strip()
+    except Exception as e:
+        raise TextProcessingError("text_normalization", len(text), e)
+
+
+def remove_headers_footers(text: str) -> str:
+    """Remove page numbers and standalone numbers often present in headers/footers."""
     lines = text.split('\n')
-    # Example rule: Remove lines that look like "Page [number]"
-    cleaned_lines = [line for line in lines if not re.match(r'^Page \d+$', line.strip())]
-    # Example rule: Remove lines that are just a number (common page number format)
-    cleaned_lines = [line for line in cleaned_lines if not line.strip().isdigit()]
+    cleaned_lines = []
+    for line in lines:
+        if TextCleaner.is_page_number(line):
+            continue
+        if TextCleaner.is_standalone_number(line):
+            continue
+        cleaned_lines.append(line)
     return '\n'.join(cleaned_lines)
 
 
-# Global spaCy model to avoid repeated loading
-_nlp = None
+def segment_text(text: str, max_length: Optional[int] = None) -> List[str]:
+    """Segment text into chunks ending at sentence boundaries by character length."""
+    config = get_config()
+    if max_length is None:
+        max_length = config.MAX_CHUNK_LENGTH
 
-def get_nlp():
-    """Get spaCy model, loading it once if needed."""
-    global _nlp
-    if _nlp is None:
-        _nlp = spacy.load("en_core_web_sm")
-    return _nlp
-
-def segment_text(text, max_length=2000):
-    """
-    Segments the input text into chunks of approximately max_length characters,
-    ensuring that segments end at sentence boundaries.
-    """
-    nlp = get_nlp()
-    doc = nlp(text)
-    
-    sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
-    
-    # Group sentences into chunks under max_length
-    chunks = []
-    current_chunk = ""
-    
-    for sentence in sentences:
-        if len(current_chunk) + len(sentence) + 1 <= max_length:
-            current_chunk += (" " if current_chunk else "") + sentence
-        else:
-            if current_chunk:
-                chunks.append(current_chunk)
-            current_chunk = sentence
-    
-    if current_chunk:
-        chunks.append(current_chunk)
-    
-    return chunks if chunks else [text]
-
-def filter_segments(segments, min_length=50):
-    """
-    Filters out segments that are shorter than min_length characters
-    or contain procedural/boilerplate content.
-    """
-    # Rule for procedural content (starts with a common command verb)
-    procedural_pattern = r'^\s*(First|Next|Then|Click|Select|Enter|Type)\s*,\s*.*'
-    # Rule for common boilerplate
-    boilerplate_pattern = r'Copyright|All rights reserved|Privacy Policy'
-    
-    filtered = []
-    for segment in segments:
-        if (isinstance(segment, str) and len(segment.strip()) >= min_length and 
-            not re.search(procedural_pattern, segment, re.IGNORECASE) and 
-            not re.search(boilerplate_pattern, segment, re.IGNORECASE)):
-            filtered.append(segment)
-    
-    return filtered
-
-
-def segment_into_chunks(text, target_words=220, overlap_ratio=0.2):
-    """
-    Segments text into chunks of approximately target_words, preserving sentence boundaries.
-    Overlaps consecutive chunks by overlap_ratio of the chunk size (by sentence count).
-
-    Fallbacks to a regex-based sentence splitter if spaCy model is unavailable.
-    """
     try:
-        nlp = spacy.load("en_core_web_sm")
+        nlp = get_nlp_model()
         doc = nlp(text)
         sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
     except Exception:
-        # Regex-based sentence splitting fallback
-        sentences = [s.strip() for s in re.split(r'(?<=[.!?])\s+', text) if s.strip()]
+        # Regex fallback
+        sentences = TextCleaner.split_sentences(text)
 
-    chunks = []
+    chunks: List[str] = []
+    current = ""
+    for sentence in sentences:
+        if len(current) + len(sentence) + 1 <= max_length:
+            current += (" " if current else "") + sentence
+        else:
+            if current:
+                chunks.append(current)
+            current = sentence
+    if current:
+        chunks.append(current)
+
+    return chunks if chunks else [text]
+
+
+def filter_segments(segments: List[str], min_length: Optional[int] = None) -> List[str]:
+    """Filter out too-short and low-value segments."""
+    config = get_config()
+    if min_length is None:
+        min_length = config.MIN_SEGMENT_LENGTH
+
+    filtered: List[str] = []
+    for segment in segments:
+        s = segment.strip()
+        if (len(s) >= min_length and
+            not TextCleaner.is_procedural_content(s) and
+            not TextCleaner.is_boilerplate_content(s)):
+            filtered.append(s)
+    return filtered
+
+
+def segment_into_chunks(text: str, target_words: Optional[int] = None, overlap_ratio: Optional[float] = None) -> List[str]:
+    """Segment text into overlapping chunks by word count while preserving sentence boundaries."""
+    config = get_config()
+    if target_words is None:
+        target_words = config.TARGET_WORDS_PER_CHUNK
+    if overlap_ratio is None:
+        overlap_ratio = config.CHUNK_OVERLAP_RATIO
+
+    try:
+        nlp = get_nlp_model()
+        doc = nlp(text)
+        sentences = [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    except Exception:
+        sentences = TextCleaner.split_sentences(text)
+
+    chunks: List[str] = []
     idx = 0
     num_sentences = len(sentences)
     if num_sentences == 0:
         return []
 
     while idx < num_sentences:
-        current_chunk = []
+        current_chunk: List[str] = []
         word_count = 0
         while idx < num_sentences and word_count < target_words:
             sent = sentences[idx]
@@ -131,21 +136,15 @@ def segment_into_chunks(text, target_words=220, overlap_ratio=0.2):
     return chunks
 
 
-def filter(text, min_length=50):
-    """
-    Backward-compatible filter that accepts a string, removes boilerplate/procedural lines,
-    and returns the cleaned string. Prefer using filter_segments for lists of segments.
-    """
-
-    # Rule for procedural content (starts with a common command verb)
-    procedural_pattern = r'^\s*(First|Next|Then|Click|Select|Enter|Type)\s*,\s*.*'
-    # Rule for common boilerplate
-    boilerplate_pattern = r'Copyright|All rights reserved|Privacy Policy'
+def filter(text: str, min_length: Optional[int] = None) -> str:
+    """Backward-compatible filter for a raw text string."""
+    config = get_config()
+    if min_length is None:
+        min_length = config.MIN_SEGMENT_LENGTH
 
     lines = text.split('\n')
-    filtered_lines = []
+    filtered_lines: List[str] = []
     for line in lines:
-        if not re.search(procedural_pattern, line, re.IGNORECASE) and not re.search(boilerplate_pattern, line, re.IGNORECASE):
+        if not TextCleaner.is_procedural_content(line) and not TextCleaner.is_boilerplate_content(line):
             filtered_lines.append(line)
-
     return '\n'.join(filtered_lines).strip()
