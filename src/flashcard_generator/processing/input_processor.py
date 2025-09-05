@@ -5,10 +5,10 @@ import mimetypes
 from pathlib import Path
 from typing import List, Union, Optional
 from logging import getLogger
-from model_manager import get_ocr_reader
-from patterns import FilePatterns
-from config import get_config
-from exceptions import InputProcessingError, FileTypeError, OCRError
+from ..utils.model_manager import get_ocr_reader
+from ..utils.patterns import FilePatterns
+from ..config.settings import get_config
+from ..utils.exceptions import InputProcessingError, FileTypeError, OCRError
 
 
 def detect_file_type(file_path: Union[str, Path]) -> str:

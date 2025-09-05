@@ -1,7 +1,7 @@
-from ai import generate_flashcards, generate_summary
-from storage import clean_dataset, save_flashcards, load_flashcards
-from textProcessing import text_normalization, segment_into_chunks, filter_segments, filter
-from input_processor import process_input
+from .core.ai import generate_flashcards, generate_summary
+from .core.storage import clean_dataset, save_flashcards, load_flashcards
+from .core.text_processor import text_normalization, segment_into_chunks, filter_segments, filter
+from .processing.input_processor import process_input
 import os
 
 

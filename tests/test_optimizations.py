@@ -12,22 +12,22 @@ def test_imports():
     print("🧪 Testing module imports...")
     
     try:
-        from model_manager import ModelManager, get_nlp_model, get_ai_generator, get_ocr_reader
+        from flashcard_generator.utils.model_manager import ModelManager, get_nlp_model, get_ai_generator, get_ocr_reader
         print("✅ model_manager imported successfully")
         
-        from patterns import TextPatterns, TextCleaner, AIPatterns, FilePatterns
+        from flashcard_generator.utils.patterns import TextPatterns, TextCleaner, AIPatterns, FilePatterns
         print("✅ patterns imported successfully")
         
-        from config import Config, get_config
+        from flashcard_generator.config.settings import Config, get_config
         print("✅ config imported successfully")
         
-        from exceptions import (FlashcardGeneratorError, InputProcessingError, 
+        from flashcard_generator.utils.exceptions import (FlashcardGeneratorError, InputProcessingError, 
                               ModelLoadingError, TextProcessingError, 
                               AIGenerationError, StorageError)
         print("✅ exceptions imported successfully")
         
         # Test optimized storage
-        from storage import FlashcardStorage, load_flashcards, save_flashcards
+        from flashcard_generator.core.storage import FlashcardStorage, load_flashcards, save_flashcards
         print("✅ optimized storage imported successfully")
         
         return True
@@ -41,7 +41,7 @@ def test_config_system():
     print("\n🔧 Testing configuration system...")
     
     try:
-        from config import get_config, Config
+        from flashcard_generator.config.settings import get_config, Config
         
         config = get_config()
         print(f"✅ Config loaded: OCR threshold = {config.OCR_CONFIDENCE_THRESHOLD}")
@@ -66,7 +66,7 @@ def test_patterns():
     print("\n📝 Testing regex patterns...")
     
     try:
-        from patterns import TextPatterns, TextCleaner, FilePatterns
+        from flashcard_generator.utils.patterns import TextPatterns, TextCleaner, FilePatterns
         
         # Test text cleaning patterns
         test_text = "<p>Hello  world!</p>"
@@ -93,7 +93,7 @@ def test_storage_optimization():
     print("\n💾 Testing storage optimization...")
     
     try:
-        from storage import FlashcardStorage
+        from flashcard_generator.core.storage import FlashcardStorage
         
         # Create test storage
         storage = FlashcardStorage("test_cards.json")
@@ -140,7 +140,7 @@ def test_model_manager():
     print("\n🤖 Testing model manager...")
     
     try:
-        from model_manager import ModelManager
+        from flashcard_generator.utils.model_manager import ModelManager
         
         # Test singleton pattern
         manager1 = ModelManager.get_instance()
@@ -168,7 +168,7 @@ def test_integration():
     
     try:
         # Test if textProcessing can use the new optimizations
-        from textProcessing import text_normalization, segment_into_chunks
+        from flashcard_generator.core.text_processor import text_normalization, segment_into_chunks
         
         test_text = "<p>This is a test. Another sentence here.</p>"
         normalized = text_normalization(test_text)
@@ -178,7 +178,7 @@ def test_integration():
         print(f"✅ Chunking works: {len(chunks)} chunks created")
         
         # Test input processing integration
-        from input_processor import process_input
+        from flashcard_generator.processing.input_processor import process_input
         
         # Test with our sample document
         if Path("sample_document.txt").exists():
@@ -200,7 +200,7 @@ def run_performance_benchmark():
     try:
         # Test pattern compilation performance
         import re
-        from patterns import TextPatterns
+        from flashcard_generator.utils.patterns import TextPatterns
         
         test_text = "First, click here. Then select option. Copyright notice."
         iterations = 1000

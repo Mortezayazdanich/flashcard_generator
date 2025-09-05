@@ -2,10 +2,10 @@ from bs4 import BeautifulSoup
 import ftfy
 from typing import List, Optional
 import logging
-from model_manager import get_nlp_model
-from patterns import TextCleaner, TextPatterns
-from config import get_config
-from exceptions import TextProcessingError
+from ..utils.model_manager import get_nlp_model
+from ..utils.patterns import TextCleaner, TextPatterns
+from ..config.settings import get_config
+from ..utils.exceptions import TextProcessingError
 
 logger = logging.getLogger(__name__)
 

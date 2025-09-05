@@ -1,16 +1,33 @@
-# Dependencies:
+# Core Dependencies for AI Processing
+transformers>=4.21.0
+torch>=2.0.0
+tiktoken>=0.4.0
+protobuf>=4.21.0
 
-transformers
-torch
-tiktoken
-protobuf
-blobfile
-Flask
-pandas
-beautifulsoup4
-ftfy
-spacy
-sentencepiece
-PyMuPDF
-easyocr
-Pillow
+# Web Framework (Optional - for future web interface)
+Flask>=2.3.0
+
+# Data Processing
+pandas>=2.0.0
+beautifulsoup4>=4.12.0
+ftfy>=6.1.0
+
+# Natural Language Processing
+spacy>=3.6.0
+sentencepiece>=0.1.99
+
+# PDF and OCR Processing
+PyMuPDF>=1.23.0
+easyocr>=1.7.0
+Pillow>=10.0.0
+
+# Additional Utilities
+blobfile>=2.0.2
+typing-extensions>=4.7.0
+
+# Development Dependencies (optional)
+# pytest>=7.4.0
+# pytest-cov>=4.1.0
+# black>=23.7.0
+# isort>=5.12.0
+# mypy>=1.5.0

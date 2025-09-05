@@ -7,7 +7,7 @@ This script tests the Phase 1 implementation of PDF & OCR integration.
 
 import sys
 import os
-from input_processor import (
+from flashcard_generator.processing.input_processor import (
     detect_file_type, 
     process_input, 
     extract_text_from_pdf, 

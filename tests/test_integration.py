@@ -3,8 +3,8 @@
 Integration test for Phase 1 PDF & OCR implementation
 """
 
-from input_processor import process_input
-from textProcessing import text_normalization, segment_into_chunks, filter_segments, filter
+from flashcard_generator.processing.input_processor import process_input
+from flashcard_generator.core.text_processor import text_normalization, segment_into_chunks, filter_segments, filter
 
 def test_integration():
     """Test the complete integration from file input to text processing"""

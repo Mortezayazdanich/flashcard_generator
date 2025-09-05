@@ -37,7 +37,7 @@ class Config:
     SPACY_MODEL_NAME: str = "en_core_web_sm"
     
     # File Paths
-    FLASHCARDS_STORAGE: str = "flashcards.json"
+    FLASHCARDS_STORAGE: str = "data/flashcards.json"
     CONFIG_FILE: str = "flashcard_config.json"
     
     # Performance Settings

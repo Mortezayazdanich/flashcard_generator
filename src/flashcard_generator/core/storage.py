@@ -3,8 +3,8 @@ import logging
 from json import JSONDecodeError
 from pathlib import Path
 from typing import List, Dict, Set, Optional, Any
-from config import get_config
-from exceptions import StorageError
+from ..config.settings import get_config
+from ..utils.exceptions import StorageError
 
 
 class FlashcardStorage:

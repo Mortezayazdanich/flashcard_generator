@@ -1,9 +1,9 @@
 from typing import List, Dict, Any, Optional
 import logging
-from model_manager import get_ai_generator
-from patterns import AIPatterns
-from config import get_config
-from exceptions import AIGenerationError
+from ..utils.model_manager import get_ai_generator
+from ..utils.patterns import AIPatterns
+from ..config.settings import get_config
+from ..utils.exceptions import AIGenerationError
 
 def generate_summary(text: str, max_tokens: Optional[int] = None) -> str:
     """Generate and return a summary of the given text."""
