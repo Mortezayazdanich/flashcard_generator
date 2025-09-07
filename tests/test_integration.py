@@ -12,7 +12,7 @@ def test_integration():
     print("🧪 Testing Phase 1 Integration")
     
     # Test with our sample document
-    file_path = "sample_document.txt"
+    file_path = "./examples/sample_document.txt"
     
     try:
         # Phase 0: Input Processing  

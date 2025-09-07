@@ -31,7 +31,7 @@ Created a comprehensive input processing module with:
 Updated the main application with:
 
 **New Phase 0: Input Processing**
-- Interactive menu for input method selection
+- Interactive menu for input method selection (In console)
 - File upload support (PDF, images, text files)
 - Manual text entry (original functionality preserved)
 - Graceful fallback to manual input on file processing errors
