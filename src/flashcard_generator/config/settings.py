@@ -6,57 +6,97 @@ the application and enable easy customization.
 """
 
 from dataclasses import dataclass, field
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from pathlib import Path
 import json
 import os
+import logging
+
+
+def _getenv_str(key: str, default: str = '') -> str:
+    """Get an environment variable as a string."""
+    return os.getenv(key, default)
+
+def _getenv_int(key: str, default: int = 0) -> int:
+    """Get an environment variable as an integer."""
+    return int(os.getenv(key, default))
+
+def _getenv_float(key: str, default: float = 0.0) -> float:
+    """Get an environment variable as a float."""
+    return float(os.getenv(key, default))
+
+def _getenv_bool(key: str, default: bool = False) -> bool:
+    """Get an environment variable as a boolean."""
+    return os.getenv(key, str(default)).lower() in ('true', '1', 'yes', 'on')
+
+def _getenv_list(key: str, default: str = '') -> List[str]:
+    """Get an environment variable as a list, split by comma."""
+    value = os.getenv(key, default)
+    if not value:
+        return []
+    return [item.strip() for item in value.split(',')]
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
 class Config:
     """Central configuration for the flashcard generator."""
-    
+
+    # General Settings
+    DEBUG: bool = _getenv_bool('DEBUG', False)
+
+    # AI Settings
+    MODEL_NAME = _getenv_str("MODEL_NAME", "google/flan-t5-base")
+    NUM_QS = _getenv_int("NUM_QS", 3)
+    SEGMENT_WORDS = _getenv_int("SEGMENT_WORDS", 220)
+    SEGMENT_OVERLAP = _getenv_float("SEGMENT_OVERLAP", 0.2)
+    OCR_LANGS = _getenv_list("OCR_LANGS", "en")
+    STORAGE_PATH = Path(_getenv_str("STORAGE_PATH", "flashcards.json"))
+    SPACY_MODEL = _getenv_str("SPACY_MODEL", "en_core_web_sm")
+
     # OCR Settings
-    OCR_CONFIDENCE_THRESHOLD: float = 0.5
+    OCR_CONFIDENCE_THRESHOLD: float = _getenv_float("OCR_CONFIDENCE_THRESHOLD", 0.5)
     OCR_DEFAULT_LANGUAGES: List[str] = field(default_factory=lambda: ['en'])
     
     # Text Processing Settings
-    TARGET_WORDS_PER_CHUNK: int = 220
-    CHUNK_OVERLAP_RATIO: float = 0.2
-    MIN_SEGMENT_LENGTH: int = 50
-    MAX_CHUNK_LENGTH: int = 2000
-    
+    TARGET_WORDS_PER_CHUNK: int = _getenv_int("TARGET_WORDS_PER_CHUNK", 220)    
+    CHUNK_OVERLAP_RATIO: float = _getenv_float("CHUNK_OVERLAP_RATIO", 0.2)
+    MIN_SEGMENT_LENGTH: int = _getenv_int("MIN_SEGMENT_LENGTH", 50)
+    MAX_CHUNK_LENGTH: int = _getenv_int("MAX_CHUNK_LENGTH", 2000)
+
     # AI Generation Settings
-    MAX_SUMMARY_TOKENS: int = 200
-    MAX_QUESTION_TOKENS: int = 128
-    MAX_ANSWER_TOKENS: int = 48
-    DEFAULT_QUESTIONS_PER_SEGMENT: int = 3
-    AI_MODEL_NAME: str = "google/flan-t5-base"
+    MAX_SUMMARY_TOKENS: int = _getenv_int("MAX_SUMMARY_TOKENS", 200)
+    MAX_QUESTION_TOKENS: int = _getenv_int("MAX_QUESTION_TOKENS", 128)
+    MAX_ANSWER_TOKENS: int = _getenv_int("MAX_ANSWER_TOKENS", 48)
+    DEFAULT_QUESTIONS_PER_SEGMENT: int = _getenv_int("DEFAULT_QUESTIONS_PER_SEGMENT", 3)
+    AI_MODEL_NAME: str = _getenv_str("AI_MODEL_NAME", "google/flan-t5-base")
     
     # SpaCy Settings
-    SPACY_MODEL_NAME: str = "en_core_web_sm"
+    SPACY_MODEL_NAME: str = _getenv_str("SPACY_MODEL_NAME", "en_core_web_sm")
     
     # File Paths
-    FLASHCARDS_STORAGE: str = "data/flashcards.json"
-    CONFIG_FILE: str = "flashcard_config.json"
+    FLASHCARDS_STORAGE: str = _getenv_str("FLASHCARDS_STORAGE", "data/flashcards.json")
+    CONFIG_FILE: str = _getenv_str("CONFIG_FILE", "flashcard_config.json")
     
     # Performance Settings
-    ENABLE_MODEL_PRELOADING: bool = False
-    ENABLE_CACHING: bool = True
-    MAX_FILE_SIZE_MB: int = 100
+    ENABLE_MODEL_PRELOADING: bool = _getenv_bool("ENABLE_MODEL_PRELOADING", False)
+    ENABLE_CACHING: bool = _getenv_bool("ENABLE_CACHING", True)
+    MAX_FILE_SIZE_MB: int = _getenv_int("MAX_FILE_SIZE_MB", 100)
     
     # Quality Filters
-    MIN_ANSWER_WORDS: int = 2
-    MIN_QUESTION_LENGTH: int = 5
-    MAX_ANSWER_WORDS: int = 50
+    MIN_ANSWER_WORDS: int = _getenv_int("MIN_ANSWER_WORDS", 2)
+    MIN_QUESTION_LENGTH: int = _getenv_int("MIN_QUESTION_LENGTH", 5)
+    MAX_ANSWER_WORDS: int = _getenv_int("MAX_ANSWER_WORDS", 50)
     
     # Logging Settings
-    LOG_LEVEL: str = "INFO"
-    LOG_FORMAT: str = "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
-    
-    def save_to_file(self, filepath: str = None) -> None:
+    LOG_LEVEL: str = _getenv_str("LOG_LEVEL", "INFO")
+    LOG_FORMAT: str = _getenv_str("LOG_FORMAT", "%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    def save_to_file(self, filepath: str = '') -> None:
         """Save current configuration to JSON file."""
-        if filepath is None:
+        if filepath == '':
             filepath = self.CONFIG_FILE
             
         config_dict = {}
@@ -67,9 +107,9 @@ class Config:
             json.dump(config_dict, f, indent=2)
     
     @classmethod
-    def load_from_file(cls, filepath: str = None) -> 'Config':
+    def load_from_file(cls, filepath: str = '') -> 'Config':
         """Load configuration from JSON file."""
-        if filepath is None:
+        if filepath == '':
             filepath = cls.__dataclass_fields__['CONFIG_FILE'].default
             
         if not os.path.exists(filepath):
@@ -85,7 +125,7 @@ class Config:
             
         except (json.JSONDecodeError, TypeError) as e:
             # Return default config if loading fails
-            print(f"Warning: Could not load config from {filepath}: {e}")
+            logger.warning(f"Could not load config from {filepath}: {e}")
             return cls()
     
     def update_from_env(self) -> None:
@@ -152,9 +192,9 @@ config.update_from_env()
 # Validate configuration
 validation_issues = config.validate()
 if validation_issues:
-    print("⚠️ Configuration validation issues:")
+    logger.warning("⚠️ Configuration validation issues:")
     for issue in validation_issues:
-        print(f"  - {issue}")
+        logger.warning(f"  - {issue}")
 
 
 def get_config() -> Config:
@@ -169,7 +209,7 @@ def update_config(**kwargs) -> None:
         if hasattr(config, key.upper()):
             setattr(config, key.upper(), value)
         else:
-            print(f"Warning: Unknown configuration key: {key}")
+            logger.warning(f"Unknown configuration key: {key}")
 
 
 def reset_config() -> None:

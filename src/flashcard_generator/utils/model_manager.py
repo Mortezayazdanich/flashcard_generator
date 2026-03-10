@@ -6,9 +6,9 @@ Implements singleton pattern with lazy loading for efficient resource management
 """
 
 import logging
-import spacy
-import easyocr
-from transformers import pipeline
+import spacy  # pyright: ignore[reportMissingImports]
+import easyocr  # pyright: ignore[reportMissingImports]
+from transformers import pipeline  # pyright: ignore[reportMissingImports]
 from typing import Dict, List, Optional, Any
 from threading import Lock
 
@@ -63,7 +63,8 @@ class ModelManager:
             except Exception as e:
                 self.logger.error(f"Failed to load AI generator {model_name}: {e}")
                 raise RuntimeError(f"Could not load AI model '{model_name}'. "
-                                 f"Check your internet connection and available disk space.")
+                                 f"Check your internet connection and available disk space."
+                                 f"Check your available system memory.")
         
         return self._models[cache_key]
     
@@ -79,7 +80,8 @@ class ModelManager:
             except Exception as e:
                 self.logger.error(f"Failed to load EasyOCR for {languages}: {e}")
                 raise RuntimeError(f"Could not load EasyOCR for languages '{languages}'. "
-                                 f"Check your internet connection and available disk space.")
+                                 f"Check your internet connection and available disk space."
+                                 f"Check your available system memory.")
         
         return self._models[cache_key]
     

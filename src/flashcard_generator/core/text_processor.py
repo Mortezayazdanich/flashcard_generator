@@ -1,5 +1,5 @@
-from bs4 import BeautifulSoup
-import ftfy
+from bs4 import BeautifulSoup  # pyright: ignore[reportMissingImports,reportMissingModuleSource]
+import ftfy  # pyright: ignore[reportMissingImports]
 from typing import List, Optional
 import logging
 from ..utils.model_manager import get_nlp_model

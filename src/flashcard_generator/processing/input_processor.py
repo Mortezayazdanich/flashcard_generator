@@ -1,4 +1,4 @@
-import fitz  # PyMuPDF
+import fitz  # PyMuPDF # pyright: ignore[reportMissingImports]
 import os
 import logging
 import mimetypes

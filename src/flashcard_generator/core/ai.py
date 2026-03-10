@@ -5,10 +5,11 @@ from ..utils.patterns import AIPatterns
 from ..config.settings import get_config
 from ..utils.exceptions import AIGenerationError
 
+logger = logging.getLogger(__name__)
+
 def generate_summary(text: str, max_tokens: Optional[int] = None) -> str:
     """Generate and return a summary of the given text."""
     config = get_config()
-    logger = logging.getLogger(__name__)
     
     if max_tokens is None:
         max_tokens = config.MAX_SUMMARY_TOKENS
@@ -20,9 +21,9 @@ def generate_summary(text: str, max_tokens: Optional[int] = None) -> str:
         summary_result = generator(summary_prompt, max_new_tokens=max_tokens, truncation=True)
         summary = summary_result[0]['generated_text']
         
-        print("--- Generated Summary ---")
-        print(summary)
-        print("-" * 25)
+        logger.info("--- Generated Summary ---")
+        logger.info(summary)
+        logger.info("-" * 25)
         
         return summary
         
@@ -36,7 +37,6 @@ def generate_flashcards(text: str, num_questions: Optional[int] = None) -> List[
     Generates flashcards (question-answer pairs) from a given text using optimized AI generation.
     """
     config = get_config()
-    logger = logging.getLogger(__name__)
     
     if num_questions is None:
         num_questions = config.DEFAULT_QUESTIONS_PER_SEGMENT
@@ -66,7 +66,7 @@ def generate_flashcards(text: str, num_questions: Optional[int] = None) -> List[
 def _generate_questions(text: str, num_questions: int) -> List[str]:
     """Generate questions from text using optimized prompting."""
     config = get_config()
-    
+      
     questions_prompt = (
         f"Generate a JSON array of exactly {num_questions} distinct question strings based on the text. "
         "Output only the JSON array with no extra text before or after.\n"
@@ -133,7 +133,6 @@ def _generate_fallback_questions(text: str, needed: int, existing: List[str]) ->
     config = get_config()
     questions = []
     existing_lower = {q.lower() for q in existing}
-    
     for _ in range(needed):
         single_prompt = (
             "Generate one distinct, insightful question based on the text below. "
@@ -164,6 +163,7 @@ def _generate_fallback_questions(text: str, needed: int, existing: List[str]) ->
                 break
                 
         except Exception:
+            logger.exception("Failed to generate fallback questions")
             break
     
     return questions

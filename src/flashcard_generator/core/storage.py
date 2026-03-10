@@ -7,6 +7,9 @@ from ..config.settings import get_config
 from ..utils.exceptions import StorageError
 
 
+logger = logging.getLogger(__name__)
+
+
 class FlashcardStorage:
     """Optimized flashcard storage with caching and efficient operations."""
     
@@ -131,5 +134,5 @@ def clean_dataset() -> int:
     """Clean dataset using the global storage instance."""
     duplicates_removed = _storage.clean_dataset()
     if duplicates_removed > 0:
-        print(f"\n✅ Cleaned dataset: removed {duplicates_removed} duplicates")
+        logger.info(f"\n✅ Cleaned dataset: removed {duplicates_removed} duplicates")
     return duplicates_removed
